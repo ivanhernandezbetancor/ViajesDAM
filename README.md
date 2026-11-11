@@ -48,6 +48,6 @@ Desarrollar **ViajesDAM**, una aplicación Android para almacenar y consultar lo
 
 <div align="center">
 
-👉 **[Ver el archivo HTML de la actividad](./ViajesDAM.html)**
+[![Ver Presentación Web](https://img.shields.io/badge/🌐_Ver_Presentación_Web-ViajesDAM-0b6e6e?style=for-the-badge)](https://ivanhernandezbetancor.github.io/ViajesDAM/)
 
 </div>
