@@ -1,0 +1,1414 @@
+[ViajesDAM.html](https://github.com/user-attachments/files/34699911/ViajesDAM.html)
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Actividad 9: ViajesDAM</title><style>:root{--bg:#f4f6f8;--surface:#fff;--fg:#16212c;--muted:#5b6b7a;--line:#d5dce3;--accent:#0b6e6e;--code:#eef1f4}
+@media (prefers-color-scheme:dark){:root{--bg:#10171e;--surface:#18222c;--fg:#e6edf3;--muted:#92a3b3;--line:#2b3947;--accent:#4fc3bd;--code:#0e151b}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 system-ui,"Segoe UI",sans-serif}
+main{max-width:860px;margin:0 auto;padding:32px 16px 64px}
+h1{font-size:2rem;line-height:1.2;margin:0 0 8px}
+h2{font-size:1.45rem;margin:2.2em 0 .6em;padding-bottom:.3em;border-bottom:2px solid var(--accent)}
+h3{font-size:1.1rem;margin:1.8em 0 .5em;color:var(--accent)}
+hr{border:0;border-top:1px solid var(--line);margin:1.5em 0}
+blockquote{margin:1em 0;padding:.4em 1em;border-left:4px solid var(--accent);background:var(--surface);color:var(--muted)}
+table{border-collapse:collapse;width:100%;background:var(--surface)}
+th,td{border:1px solid var(--line);padding:8px 12px;text-align:left}
+th{background:var(--code)}
+code{font-family:ui-monospace,Consolas,monospace;font-size:.9em;background:var(--code);padding:1px 5px;border-radius:4px}
+.wrap{position:relative;margin:1em 0}
+pre{margin:0;background:var(--code);border:1px solid var(--line);border-radius:8px;padding:14px 16px;overflow-x:auto;font-size:.85rem;line-height:1.5}
+pre code{background:none;padding:0}
+.cp{position:absolute;top:8px;right:8px;font:inherit;font-size:.75rem;padding:3px 10px;background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:6px;cursor:pointer}
+.cp:hover{border-color:var(--accent)}
+ul.task-list{list-style:none;padding-left:0}
+.k{color:#a626a4}.s{color:#50a14f}.c{color:#8a94a0;font-style:italic}.a{color:#b76b01}
+@media (prefers-color-scheme:dark){.k{color:#d79bf0}.s{color:#9ad38a}.a{color:#e5b567}}
+@media print{.cp{display:none}body{background:#fff;color:#000}pre{white-space:pre-wrap}}
+</style></head><body><main><h1 id="actividad-9-viajesdam">Actividad 9: ViajesDAM</h1>
+<p><strong>Programación Multimedia y Dispositivos Móviles (2º DAM) ·
+UT2</strong> Diario de viajes con menú lateral, Room, navegación con
+parámetros y corrutinas</p>
+<hr />
+<h2 id="1-enunciado">1. Enunciado</h2>
+<h3 id="objetivo">Objetivo</h3>
+<p>Desarrollar <strong>ViajesDAM</strong>, una aplicación Android para
+almacenar y consultar los viajes de un diario personal. La actividad
+sigue la misma arquitectura por capas que DAMFlix (Parte 7):
+<strong>MVVM + Room</strong>, con <code>ViewModel</code> y
+<code>Factory</code> independientes, rutas en una
+<code>sealed class</code>, un único <code>Pantallas.kt</code> en la raíz
+y las pantallas de catálogo y formulario en <code>ui/screens</code>.</p>
+<h3 id="requisitos-funcionales">Requisitos funcionales</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Requisito</th>
+<th>Cómo se cumple</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>1. Inicio</strong></td>
+<td>Pantalla de bienvenida con el nombre de la app</td>
+</tr>
+<tr class="even">
+<td><strong>2. Alta de viaje</strong></td>
+<td>Formulario con destino, país, año del viaje y casilla "Ya lo he
+visitado". El botón Guardar solo se habilita si destino y país no están
+vacíos y el año es un número válido</td>
+</tr>
+<tr class="odd">
+<td><strong>3. Catálogo</strong></td>
+<td><code>LazyColumn</code> con todos los viajes. Cada tarjeta tiene un
+icono de <strong>favorito</strong> y otro de <strong>eliminar</strong>,
+y toda la tarjeta es clicable</td>
+</tr>
+<tr class="even">
+<td><strong>4. Detalle (Maestro-Detalle)</strong></td>
+<td>Al pulsar una tarjeta se navega a <code>"detalle/{viajeId}"</code>.
+La carga se hace con una corrutina en <code>Dispatchers.IO</code> y la
+pantalla muestra <code>Cargando</code>, <code>Exito</code> o
+<code>Error</code></td>
+</tr>
+<tr class="odd">
+<td><strong>5. Perfil</strong></td>
+<td>Cabecera con degradado, avatar circular con borde, nombre, rol,
+descripción y tres tarjetas de estadísticas (viajes, favoritos y
+visitados) calculadas con los datos de Room</td>
+</tr>
+<tr class="even">
+<td><strong>6. Menú hamburguesa</strong></td>
+<td><code>ModalNavigationDrawer</code> con Inicio, Catálogo, Añadir
+Viaje y Perfil. El detalle no aparece en el menú</td>
+</tr>
+</tbody>
+</table>
+<h3 id="requisitos-técnicos">Requisitos técnicos</h3>
+<ul>
+<li>Paquete base <code>com.example.viajesdam</code>.</li>
+<li>Prohibido escribir cadenas hardcoded: todos los textos de la
+interfaz en <code>strings.xml</code> y
+<code>stringResource()</code>.</li>
+<li>Clases de Room en el paquete <code>model</code>, junto al
+repositorio.</li>
+<li><code>Flow</code> en el DAO y <code>StateFlow</code> en el ViewModel
+con <code>stateIn</code>.</li>
+<li>Base de datos y repositorio creados en una clase
+<code>Application</code> con <code>by lazy</code>.</li>
+<li>Cada ViewModel tiene su propia clase
+<code>ViewModelProvider.Factory</code>.</li>
+<li>Las pantallas no reciben el <code>NavController</code>: reciben
+lambdas (event hoisting).</li>
+<li>La lectura de Room del detalle se ejecuta con
+<code>withContext(Dispatchers.IO)</code>.</li>
+<li>Estados del detalle con una <code>sealed interface</code>
+(<code>Cargando</code>, <code>Exito</code>, <code>Error</code>).</li>
+<li>El mensaje de error llega al ViewModel como parámetro, porque el
+ViewModel no puede usar <code>stringResource()</code>.</li>
+</ul>
+<h3 id="rúbrica-orientativa-10-puntos">Rúbrica orientativa (10
+puntos)</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Apartado</th>
+<th>Puntos</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Capa <code>model</code>: entidad, DAO, base de datos Singleton y
+repositorio</td>
+<td>1,5</td>
+</tr>
+<tr class="even">
+<td>ViewModels, Factories y <code>stateIn</code></td>
+<td>1,5</td>
+</tr>
+<tr class="odd">
+<td>Formulario con estado y validación</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td>Catálogo con <code>LazyColumn</code>, <code>key</code> y
+acciones</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td>Menú lateral con <code>ModalNavigationDrawer</code></td>
+<td>1,5</td>
+</tr>
+<tr class="even">
+<td>Navegación con argumento y detalle con corrutinas</td>
+<td>1,5</td>
+</tr>
+<tr class="odd">
+<td>Pantalla de perfil</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td>Organización en capas y sin textos hardcoded</td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="2-arquitectura">2. Arquitectura</h2>
+<div class="wrap"><button class="cp" type="button">Copiar</button><pre><code>┌──────────────────────────────────────────────────────┐
+│  UI / Jetpack Compose                                │
+│  (Catálogo, Formulario, Perfil, Detalle, Drawer)     │
+└───────────────┬───────────────────────┬──────────────┘
+                │ Observa StateFlow     │ Observa StateFlow
+                ▼                       ▼
+┌───────────────────────────┐ ┌────────────────────────────────┐
+│ ViajeViewModel            │ │ DetalleViajeViewModel          │
+│ (lista, favorito, borrar) │ │ (estado: DetalleUiState)       │
+└───────────────┬───────────┘ └────────────────┬───────────────┘
+                │ Flow                         │ suspend + Dispatchers.IO
+                ▼                              ▼
+┌──────────────────────────────────────────────────────┐
+│  ViajeRepository                                     │
+└──────────────────────────┬───────────────────────────┘
+                           │ Llama al DAO
+                           ▼
+┌──────────────────────────────────────────────────────┐
+│  ViajeDao  ←  AppDatabase (Room)                     │
+└──────────────────────────────────────────────────────┘</code></pre></div>
+<h3 id="estructura-de-paquetes">Estructura de paquetes</h3>
+<div class="wrap"><button class="cp" type="button">Copiar</button><pre><code>app/src/main
+├── AndroidManifest.xml
+├── java/com/example/viajesdam
+│   ├── MainActivity.kt
+│   ├── ViajesApplication.kt                 # Base de datos y repositorio (by lazy)
+│   ├── Pantallas.kt                         # PantallaInicio, PantallaPerfil y PantallaDetalleScreen
+│   ├── model
+│   │   ├── ViajeEntity.kt                   # @Entity
+│   │   ├── ViajeDao.kt                      # @Dao
+│   │   ├── AppDatabase.kt                   # @Database (Singleton)
+│   │   └── ViajeRepository.kt
+│   ├── viewmodel
+│   │   ├── ViajeViewModel.kt
+│   │   ├── ViajeViewModelFactory.kt
+│   │   ├── DetalleUiState.kt                # Estado sellado del detalle
+│   │   ├── DetalleViajeViewModel.kt         # Carga asíncrona con Dispatchers.IO
+│   │   └── DetalleViajeViewModelFactory.kt
+│   ├── view
+│   │   └── Ruta.kt                          # Rutas (+ Detalle con crearRuta)
+│   └── ui
+│       ├── screens
+│       │   ├── AppViajesMainScreen.kt       # Drawer, Scaffold y NavHost
+│       │   ├── FormularioAgregarViajeScreen.kt
+│       │   └── ListaViajesScreen.kt         # Tarjetas con onClick hacia el detalle
+│       └── theme                            # Lo genera Android Studio
+└── res
+    └── values
+        └── strings.xml                      # Todos los textos de la interfaz</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th>Paquete</th>
+<th>Capa</th>
+<th>Contenido</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>model</code></td>
+<td>Modelo</td>
+<td>Entidad, DAO, base de datos y repositorio</td>
+</tr>
+<tr class="even">
+<td><code>viewmodel</code></td>
+<td>ViewModel</td>
+<td>Estado de la UI, lógica, corrutinas y fábricas</td>
+</tr>
+<tr class="odd">
+<td><code>view</code></td>
+<td>Vista (navegación)</td>
+<td>Rutas de la aplicación</td>
+</tr>
+<tr class="even">
+<td><code>ui.screens</code></td>
+<td>Vista</td>
+<td>Pantalla principal con el Drawer, formulario y catálogo</td>
+</tr>
+<tr class="odd">
+<td>(raíz)</td>
+<td>Vista / arranque</td>
+<td><code>Pantallas.kt</code>, <code>MainActivity</code> y
+<code>ViajesApplication</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="3-preparación-del-proyecto">3. Preparación del proyecto</h2>
+<p>Crea un proyecto <strong>Empty Activity</strong> con nombre
+<code>ViajesDAM</code> y paquete <code>com.example.viajesdam</code>.</p>
+<h3 id="dependencias">Dependencias</h3>
+<div class="wrap"><button class="cp" type="button">Copiar</button><pre><code>// build.gradle.kts (raíz del proyecto)
+plugins {
+    alias(libs.plugins.android.application) apply false
+    alias(libs.plugins.kotlin.compose) apply false
+    id(&quot;com.google.devtools.ksp&quot;) version &quot;2.2.10-2.0.2&quot; apply false
+}</code></pre></div>
+<div class="wrap"><button class="cp" type="button">Copiar</button><pre><code>// app/build.gradle.kts
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.compose)
+    id(&quot;com.google.devtools.ksp&quot;)
+}
+
+dependencies {
+    // Componentes del ORM Room
+    val roomVersion = &quot;2.8.5&quot;
+    implementation(&quot;androidx.room:room-runtime:$roomVersion&quot;)
+    implementation(&quot;androidx.room:room-ktx:$roomVersion&quot;)
+    ksp(&quot;androidx.room:room-compiler:$roomVersion&quot;)
+
+    // Lifecycle y ViewModel para Compose
+    implementation(&quot;androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7&quot;)
+    implementation(&quot;androidx.lifecycle:lifecycle-runtime-compose:2.8.7&quot;)
+
+    // Navegación en Jetpack Compose
+    implementation(&quot;androidx.navigation:navigation-compose:2.8.7&quot;)
+
+    // Iconos: Icons.Filled.Details está en la librería extendida
+    implementation(&quot;androidx.compose.material:material-icons-extended&quot;)
+
+    // ... el resto de dependencias que genera Android Studio (compose bom, material3, etc.)
+}</code></pre></div>
+<p>Pulsa <strong>Sync Now</strong> después de editar los archivos
+Gradle.</p>
+<p>Si aparece el error
+<code>Using kotlin.sourceSets DSL to add Kotlin sources is not allowed with built-in Kotlin</code>,
+añade esta línea al final de <code>gradle.properties</code> (el de la
+raíz):</p>
+<div class="wrap"><button class="cp" type="button">Copiar</button><pre><code>android.disallowKotlinSourceSets=false</code></pre></div>
+<h3 id="androidmanifestxml">AndroidManifest.xml</h3>
+<p>Registra la clase <code>Application</code> con el atributo
+<code>android:name</code>:</p>
+<div class="wrap"><button class="cp" type="button">Copiar</button><pre><code>&lt;application
+    android:name=&quot;.ViajesApplication&quot;
+    android:allowBackup=&quot;true&quot;
+    android:icon=&quot;@mipmap/ic_launcher&quot;
+    android:label=&quot;@string/app_name&quot;
+    android:roundIcon=&quot;@mipmap/ic_launcher_round&quot;
+    android:supportsRtl=&quot;true&quot;
+    android:theme=&quot;@style/Theme.ViajesDAM&quot;&gt;
+    &lt;!-- ... activity MainActivity ... --&gt;
+&lt;/application&gt;</code></pre></div>
+<h3 id="recursos-resvaluesstringsxml">Recursos:
+<code>res/values/strings.xml</code></h3>
+<div class="wrap"><button class="cp" type="button">Copiar</button><pre><code>&lt;resources&gt;
+    &lt;string name=&quot;app_name&quot;&gt;ViajesDAM&lt;/string&gt;
+    &lt;string name=&quot;titulo_app&quot;&gt;ViajesDAM&lt;/string&gt;
+
+    &lt;!-- Menú lateral --&gt;
+    &lt;string name=&quot;cabecera_drawer&quot;&gt;ViajesDAM - Room ORM&lt;/string&gt;
+    &lt;string name=&quot;abrir_menu&quot;&gt;Abrir Menú&lt;/string&gt;
+    &lt;string name=&quot;menu_inicio&quot;&gt;Inicio&lt;/string&gt;
+    &lt;string name=&quot;menu_catalogo&quot;&gt;Catálogo&lt;/string&gt;
+    &lt;string name=&quot;menu_anadir_viaje&quot;&gt;Añadir Viaje&lt;/string&gt;
+    &lt;string name=&quot;menu_perfil&quot;&gt;Perfil&lt;/string&gt;
+    &lt;string name=&quot;menu_detalle&quot;&gt;Detalle&lt;/string&gt;
+
+    &lt;!-- Inicio --&gt;
+    &lt;string name=&quot;inicio_bienvenida&quot;&gt;Bienvenido a ViajesDAM, tu diario de viajes&lt;/string&gt;
+
+    &lt;!-- Formulario --&gt;
+    &lt;string name=&quot;anadir_viaje&quot;&gt;Añadir Viaje (Room)&lt;/string&gt;
+    &lt;string name=&quot;destino_viaje&quot;&gt;Destino del Viaje&lt;/string&gt;
+    &lt;string name=&quot;pais_viaje&quot;&gt;País&lt;/string&gt;
+    &lt;string name=&quot;anio_viaje&quot;&gt;Año del viaje&lt;/string&gt;
+    &lt;string name=&quot;viaje_visitado&quot;&gt;Ya lo he visitado&lt;/string&gt;
+    &lt;string name=&quot;guardar_viaje&quot;&gt;Guardar Viaje&lt;/string&gt;
+
+    &lt;!-- Catálogo --&gt;
+    &lt;string name=&quot;favorito&quot;&gt;Favorito&lt;/string&gt;
+    &lt;string name=&quot;eliminar_viaje&quot;&gt;Eliminar viaje&lt;/string&gt;
+    &lt;string name=&quot;pais_anio&quot;&gt;%1$s • %2$d&lt;/string&gt;
+
+    &lt;!-- Detalle --&gt;
+    &lt;string name=&quot;detalle_volver&quot;&gt;← Volver al Catálogo&lt;/string&gt;
+    &lt;string name=&quot;detalle_cargando&quot;&gt;Cargando datos de Room en segundo plano...&lt;/string&gt;
+    &lt;string name=&quot;detalle_pais&quot;&gt;País: %1$s&lt;/string&gt;
+    &lt;string name=&quot;detalle_anio&quot;&gt;Año del viaje: %1$d&lt;/string&gt;
+    &lt;string name=&quot;detalle_visitado&quot;&gt;Estado: Ya visitado&lt;/string&gt;
+    &lt;string name=&quot;detalle_pendiente&quot;&gt;Estado: Pendiente de visitar&lt;/string&gt;
+    &lt;string name=&quot;detalle_no_encontrado&quot;&gt;Viaje no encontrado.&lt;/string&gt;
+    &lt;string name=&quot;detalle_favorito&quot;&gt;Favorito: Sí&lt;/string&gt;
+    &lt;string name=&quot;detalle_no_favorito&quot;&gt;Favorito: No&lt;/string&gt;
+
+    &lt;!-- Perfil --&gt;
+    &lt;string name=&quot;avatar_desc&quot;&gt;Avatar del usuario&lt;/string&gt;
+    &lt;string name=&quot;user_name&quot;&gt;Ivan HB&lt;/string&gt;
+    &lt;string name=&quot;user_rol&quot;&gt;Viajero Aventurero&lt;/string&gt;
+    &lt;string name=&quot;user_bio&quot;&gt;Viajero de toda la vida. Aquí guardo los viajes que he hecho y los que me quedan por hacer.&lt;/string&gt;
+    &lt;string name=&quot;estadistica_viajes&quot;&gt;Viajes&lt;/string&gt;
+    &lt;string name=&quot;estadistica_favoritos&quot;&gt;Favoritos&lt;/string&gt;
+    &lt;string name=&quot;estadistica_visitados&quot;&gt;Visitados&lt;/string&gt;
+&lt;/resources&gt;</code></pre></div>
+<hr />
+<h2 id="4-código-por-capas">4. Código por capas</h2>
+<h3 id="41-capa-de-datos-model">4.1. Capa de datos:
+<code>model</code></h3>
+<p><strong><code>model/ViajeEntity.kt</code></strong></p>
+<div class="wrap"><button class="cp" type="button">Copiar</button><pre><code>package com.example.viajesdam.model
+
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
+@Entity(tableName = &quot;viajes&quot;)
+data class ViajeEntity(
+    @PrimaryKey(autoGenerate = true)
+    val id: Int = 0,
+    val destino: String,
+    val pais: String,
+    val anio: Int,
+    val esVisitado: Boolean = false,
+    val esFavorito: Boolean = false
+)</code></pre></div>
+<p><strong><code>model/ViajeDao.kt</code></strong></p>
+<div class="wrap"><button class="cp" type="button">Copiar</button><pre><code>package com.example.viajesdam.model
+
+import androidx.room.Dao
+import androidx.room.Delete
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import androidx.room.Update
+import kotlinx.coroutines.flow.Flow
+
+@Dao
+interface ViajeDao {
+
+    // Al retornar Flow, Room notifica automáticamente cualquier cambio en la tabla
+    @Query(&quot;SELECT * FROM viajes ORDER BY id DESC&quot;)
+    fun obtenerTodos(): Flow&lt;List&lt;ViajeEntity&gt;&gt;
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertar(viaje: ViajeEntity)
+
+    @Update
+    suspend fun actualizar(viaje: ViajeEntity)
+
+    @Delete
+    suspend fun eliminar(viaje: ViajeEntity)
+
+    // Consulta de un único viaje para la pantalla de detalle
+    @Query(&quot;SELECT * FROM viajes WHERE id = :id&quot;)
+    suspend fun obtenerPorId(id: Int): ViajeEntity?
+}</code></pre></div>
+<p><strong><code>model/AppDatabase.kt</code></strong></p>
+<div class="wrap"><button class="cp" type="button">Copiar</button><pre><code>package com.example.viajesdam.model
+
+import android.content.Context
+import androidx.room.Database
+import androidx.room.Room
+import androidx.room.RoomDatabase
+
+@Database(entities = [ViajeEntity::class], version = 1, exportSchema = false)
+abstract class AppDatabase : RoomDatabase() {
+
+    abstract fun viajeDao(): ViajeDao
+
+    companion object {
+        @Volatile
+        private var INSTANCE: AppDatabase? = null
+
+        fun getDatabase(context: Context): AppDatabase {
+            return INSTANCE ?: synchronized(this) {
+                val instance = Room.databaseBuilder(
+                    context.applicationContext,
+                    AppDatabase::class.java,
+                    &quot;viajesdam_room.db&quot;
+                ).build()
+                INSTANCE = instance
+                instance
+            }
+        }
+    }
+}</code></pre></div>
+<p><strong><code>model/ViajeRepository.kt</code></strong></p>
+<div class="wrap"><button class="cp" type="button">Copiar</button><pre><code>package com.example.viajesdam.model
+
+import kotlinx.coroutines.flow.Flow
+
+class ViajeRepository(private val dao: ViajeDao) {
+
+    val todosLosViajes: Flow&lt;List&lt;ViajeEntity&gt;&gt; = dao.obtenerTodos()
+
+    suspend fun insertar(viaje: ViajeEntity) {
+        dao.insertar(viaje)
+    }
+
+    suspend fun actualizar(viaje: ViajeEntity) {
+        dao.actualizar(viaje)
+    }
+
+    suspend fun eliminar(viaje: ViajeEntity) {
+        dao.eliminar(viaje)
+    }
+
+    suspend fun obtenerPorId(id: Int): ViajeEntity? {
+        return dao.obtenerPorId(id)
+    }
+}</code></pre></div>
+<h3 id="42-contenedor-de-la-aplicación">4.2. Contenedor de la
+aplicación</h3>
+<p><strong><code>ViajesApplication.kt</code></strong></p>
+<div class="wrap"><button class="cp" type="button">Copiar</button><pre><code>package com.example.viajesdam
+
+import android.app.Application
+import com.example.viajesdam.model.AppDatabase
+import com.example.viajesdam.model.ViajeRepository
+
+class ViajesApplication : Application() {
+
+    // 1. La base de datos solo se crea cuando se accede a ella por primera vez
+    val database by lazy { AppDatabase.getDatabase(this) }
+
+    // 2. El repositorio se crea cuando se necesite, recibiendo el DAO de la BD perezosa
+    val repository by lazy { ViajeRepository(database.viajeDao()) }
+}</code></pre></div>
+<h3 id="43-capa-viewmodel-viewmodel">4.3. Capa ViewModel:
+<code>viewmodel</code></h3>
+<p><strong><code>viewmodel/ViajeViewModel.kt</code></strong></p>
+<div class="wrap"><button class="cp" type="button">Copiar</button><pre><code>package com.example.viajesdam.viewmodel
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.viajesdam.model.ViajeEntity
+import com.example.viajesdam.model.ViajeRepository
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+
+class ViajeViewModel(private val repository: ViajeRepository) : ViewModel() {
+
+    // Conversión del Flow de Room en StateFlow reactivo para Compose
+    val listaViajes: StateFlow&lt;List&lt;ViajeEntity&gt;&gt; = repository.todosLosViajes
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
+    fun agregarViaje(destino: String, pais: String, anio: Int, esVisitado: Boolean) {
+        viewModelScope.launch {
+            val nuevo = ViajeEntity(
+                destino = destino,
+                pais = pais,
+                anio = anio,
+                esVisitado = esVisitado
+            )
+            repository.insertar(nuevo)
+        }
+    }
+
+    fun conmutarFavorito(viaje: ViajeEntity) {
+        viewModelScope.launch {
+            val actualizado = viaje.copy(esFavorito = !viaje.esFavorito)
+            repository.actualizar(actualizado)
+        }
+    }
+
+    fun eliminarViaje(viaje: ViajeEntity) {
+        viewModelScope.launch {
+            repository.eliminar(viaje)
+        }
+    }
+}</code></pre></div>
+<p><strong><code>viewmodel/ViajeViewModelFactory.kt</code></strong></p>
+<div class="wrap"><button class="cp" type="button">Copiar</button><pre><code>package com.example.viajesdam.viewmodel
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import com.example.viajesdam.model.ViajeRepository
+
+class ViajeViewModelFactory(
+    private val repository: ViajeRepository
+) : ViewModelProvider.Factory {
+
+    @Suppress(&quot;UNCHECKED_CAST&quot;)
+    override fun &lt;T : ViewModel&gt; create(modelClass: Class&lt;T&gt;): T {
+        // Validamos que se nos pida instanciar nuestro ViajeViewModel
+        if (modelClass.isAssignableFrom(ViajeViewModel::class.java)) {
+            return ViajeViewModel(repository) as T
+        }
+        throw IllegalArgumentException(&quot;Clase ViewModel no reconocida por la fábrica: ${modelClass.name}&quot;)
+    }
+}</code></pre></div>
+<p><strong><code>viewmodel/DetalleUiState.kt</code></strong></p>
+<div class="wrap"><button class="cp" type="button">Copiar</button><pre><code>package com.example.viajesdam.viewmodel
+
+import com.example.viajesdam.model.ViajeEntity
+
+sealed interface DetalleUiState {
+    object Cargando : DetalleUiState
+    data class Exito(val viaje: ViajeEntity) : DetalleUiState
+    data class Error(val mensaje: String) : DetalleUiState
+}</code></pre></div>
+<p><strong><code>viewmodel/DetalleViajeViewModel.kt</code></strong></p>
+<div class="wrap"><button class="cp" type="button">Copiar</button><pre><code>package com.example.viajesdam.viewmodel
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.viajesdam.model.ViajeRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+class DetalleViajeViewModel(
+    private val repository: ViajeRepository
+) : ViewModel() {
+
+    private val _uiState = MutableStateFlow&lt;DetalleUiState&gt;(DetalleUiState.Cargando)
+    val uiState: StateFlow&lt;DetalleUiState&gt; = _uiState.asStateFlow()
+
+    fun cargarDetalleViaje(viajeId: Int, mensajeNoEncontrado: String) {
+        viewModelScope.launch {
+            _uiState.value = DetalleUiState.Cargando
+
+            val resultado = withContext(Dispatchers.IO) {
+                delay(1000) // Simulación de retardo para apreciar el indicador de carga
+                repository.obtenerPorId(viajeId)
+            }
+
+            if (resultado != null) {
+                _uiState.value = DetalleUiState.Exito(resultado)
+            } else {
+                _uiState.value = DetalleUiState.Error(mensajeNoEncontrado)
+            }
+        }
+    }
+}</code></pre></div>
+<p><strong><code>viewmodel/DetalleViajeViewModelFactory.kt</code></strong></p>
+<div class="wrap"><button class="cp" type="button">Copiar</button><pre><code>package com.example.viajesdam.viewmodel
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import com.example.viajesdam.model.ViajeRepository
+
+class DetalleViajeViewModelFactory(
+    private val repository: ViajeRepository
+) : ViewModelProvider.Factory {
+
+    @Suppress(&quot;UNCHECKED_CAST&quot;)
+    override fun &lt;T : ViewModel&gt; create(modelClass: Class&lt;T&gt;): T {
+        if (modelClass.isAssignableFrom(DetalleViajeViewModel::class.java)) {
+            return DetalleViajeViewModel(repository) as T
+        }
+        throw IllegalArgumentException(&quot;Clase ViewModel no conocida: ${modelClass.name}&quot;)
+    }
+}</code></pre></div>
+<h3 id="44-rutas-view">4.4. Rutas: <code>view</code></h3>
+<p><strong><code>view/Ruta.kt</code></strong></p>
+<div class="wrap"><button class="cp" type="button">Copiar</button><pre><code>package com.example.viajesdam.view
+
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Details
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.ui.graphics.vector.ImageVector
+import com.example.viajesdam.R
+
+sealed class Ruta(val path: String, val titulo: Int, val icono: ImageVector) {
+    object Inicio : Ruta(&quot;inicio&quot;, R.string.menu_inicio, Icons.Filled.Home)
+    object Catalogo : Ruta(&quot;catalogo&quot;, R.string.menu_catalogo, Icons.AutoMirrored.Filled.List)
+    object Formulario : Ruta(&quot;alta&quot;, R.string.menu_anadir_viaje, Icons.Filled.Add)
+    object Perfil : Ruta(&quot;perfil&quot;, R.string.menu_perfil, Icons.Filled.Person)
+
+    // Ruta dinámica con parámetro de ID (en minúsculas)
+    object Detalle : Ruta(&quot;detalle/{viajeId}&quot;, R.string.menu_detalle, Icons.Filled.Details) {
+        fun crearRuta(viajeId: Int) = &quot;detalle/$viajeId&quot;
+    }
+}</code></pre></div>
+<h3 id="45-pantallas-del-paquete-uiscreens">4.5. Pantallas del paquete
+<code>ui.screens</code></h3>
+<p><strong><code>ui/screens/FormularioAgregarViajeScreen.kt</code></strong></p>
+<div class="wrap"><button class="cp" type="button">Copiar</button><pre><code>package com.example.viajesdam.ui.screens
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
+import com.example.viajesdam.R
+import com.example.viajesdam.viewmodel.ViajeViewModel
+
+@Composable
+fun FormularioAgregarViajeScreen(
+    viewModel: ViajeViewModel,
+    onViajeGuardado: () -&gt; Unit = {},
+    modifier: Modifier = Modifier
+) {
+    var destino by remember { mutableStateOf(&quot;&quot;) }
+    var pais by remember { mutableStateOf(&quot;&quot;) }
+    var anioTexto by remember { mutableStateOf(&quot;&quot;) }
+    var esVisitado by remember { mutableStateOf(false) }
+
+    val esFormularioValido = destino.isNotBlank() &amp;&amp;
+            pais.isNotBlank() &amp;&amp;
+            anioTexto.toIntOrNull() != null
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text(
+            text = stringResource(R.string.anadir_viaje),
+            style = MaterialTheme.typography.headlineMedium
+        )
+
+        OutlinedTextField(
+            value = destino,
+            onValueChange = { destino = it },
+            label = { Text(stringResource(R.string.destino_viaje)) },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        OutlinedTextField(
+            value = pais,
+            onValueChange = { pais = it },
+            label = { Text(stringResource(R.string.pais_viaje)) },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        OutlinedTextField(
+            value = anioTexto,
+            onValueChange = { anioTexto = it },
+            label = { Text(stringResource(R.string.anio_viaje)) },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Checkbox(checked = esVisitado, onCheckedChange = { esVisitado = it })
+            Text(text = stringResource(R.string.viaje_visitado))
+        }
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        Button(
+            onClick = {
+                val anio = anioTexto.toIntOrNull() ?: 0
+                viewModel.agregarViaje(
+                    destino = destino,
+                    pais = pais,
+                    anio = anio,
+                    esVisitado = esVisitado
+                )
+                destino = &quot;&quot;
+                pais = &quot;&quot;
+                anioTexto = &quot;&quot;
+                esVisitado = false
+                onViajeGuardado()
+            },
+            enabled = esFormularioValido,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(text = stringResource(R.string.guardar_viaje))
+        }
+    }
+}</code></pre></div>
+<p><strong><code>ui/screens/ListaViajesScreen.kt</code></strong></p>
+<div class="wrap"><button class="cp" type="button">Copiar</button><pre><code>package com.example.viajesdam.ui.screens
+
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.viajesdam.R
+import com.example.viajesdam.model.ViajeEntity
+import com.example.viajesdam.viewmodel.ViajeViewModel
+
+@Composable
+fun ListaViajesScreen(
+    viewModel: ViajeViewModel,
+    onViajeClick: (Int) -&gt; Unit,
+    modifier: Modifier = Modifier
+) {
+    // Recolección reactiva del StateFlow alimentado por el Flow de Room
+    val viajes by viewModel.listaViajes.collectAsStateWithLifecycle()
+
+    LazyColumn(
+        modifier = modifier,
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(
+            items = viajes,
+            key = { j -&gt; j.id } // PrimaryKey autogenerada por Room
+        ) { viaje -&gt;
+            TarjetaViajeItem(
+                viaje = viaje,
+                onClick = { onViajeClick(viaje.id) },
+                onToggleFavorito = { viewModel.conmutarFavorito(viaje) },
+                onEliminar = { viewModel.eliminarViaje(viaje) }
+            )
+        }
+    }
+}
+
+@Composable
+fun TarjetaViajeItem(
+    viaje: ViajeEntity,
+    onClick: () -&gt; Unit,
+    onToggleFavorito: () -&gt; Unit,
+    onEliminar: () -&gt; Unit
+) {
+    Card(modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = viaje.destino,
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    text = stringResource(R.string.pais_anio, viaje.pais, viaje.anio),
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+            IconButton(onClick = onToggleFavorito) {
+                Icon(
+                    imageVector = if (viaje.esFavorito) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                    contentDescription = stringResource(R.string.favorito),
+                    tint = if (viaje.esFavorito) Color.Red else Color.Gray
+                )
+            }
+            IconButton(onClick = onEliminar) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = stringResource(R.string.eliminar_viaje)
+                )
+            }
+        }
+    }
+}</code></pre></div>
+<p><strong><code>ui/screens/AppViajesMainScreen.kt</code></strong></p>
+<div class="wrap"><button class="cp" type="button">Copiar</button><pre><code>package com.example.viajesdam.ui.screens
+
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.NavigationDrawerItemDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberDrawerState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.example.viajesdam.ViajesApplication
+import com.example.viajesdam.PantallaDetalleScreen
+import com.example.viajesdam.PantallaInicio
+import com.example.viajesdam.PantallaPerfil
+import com.example.viajesdam.R
+import com.example.viajesdam.view.Ruta
+import com.example.viajesdam.viewmodel.DetalleViajeViewModel
+import com.example.viajesdam.viewmodel.DetalleViajeViewModelFactory
+import com.example.viajesdam.viewmodel.ViajeViewModel
+import kotlinx.coroutines.launch
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AppViajesMainScreen(viewModel: ViajeViewModel) {
+    val navController = rememberNavController()
+
+    // 1. Estado del Drawer (abierto / cerrado)
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+
+    // 2. CoroutineScope necesario para animar la apertura y el cierre
+    val coroutineScope = rememberCoroutineScope()
+
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val rutaActual = navBackStackEntry?.destination?.route
+
+    val opcionesMenu = listOf(Ruta.Inicio, Ruta.Catalogo, Ruta.Formulario, Ruta.Perfil)
+
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            ModalDrawerSheet {
+                // Cabecera del menú lateral
+                Box(modifier = Modifier.fillMaxWidth().padding(24.dp)) {
+                    Text(
+                        text = stringResource(R.string.cabecera_drawer),
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+                HorizontalDivider()
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Opciones del menú
+                opcionesMenu.forEach { opcion -&gt;
+                    NavigationDrawerItem(
+                        icon = { Icon(opcion.icono, contentDescription = stringResource(opcion.titulo)) },
+                        label = { Text(stringResource(opcion.titulo)) },
+                        selected = rutaActual == opcion.path,
+                        onClick = {
+                            // Cierre asíncrono del panel
+                            coroutineScope.launch { drawerState.close() }
+                            if (rutaActual != opcion.path) {
+                                navController.navigate(opcion.path) {
+                                    popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            }
+                        },
+                        modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                    )
+                }
+            }
+        }
+    ) {
+        // Contenido principal envuelto en Scaffold
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(R.string.titulo_app)) },
+                    navigationIcon = {
+                        // Botón de hamburguesa para abrir el Drawer
+                        IconButton(onClick = { coroutineScope.launch { drawerState.open() } }) {
+                            Icon(Icons.Default.Menu, contentDescription = stringResource(R.string.abrir_menu))
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+                )
+            }
+        ) { innerPadding -&gt;
+            NavHost(
+                navController = navController,
+                startDestination = Ruta.Inicio.path,
+                modifier = Modifier.padding(innerPadding)
+            ) {
+                composable(Ruta.Inicio.path) {
+                    PantallaInicio()
+                }
+
+                composable(Ruta.Catalogo.path) {
+                    ListaViajesScreen(
+                        viewModel = viewModel,
+                        onViajeClick = { viajeId -&gt;
+                            navController.navigate(Ruta.Detalle.crearRuta(viajeId))
+                        }
+                    )
+                }
+
+                composable(Ruta.Formulario.path) {
+                    FormularioAgregarViajeScreen(
+                        viewModel = viewModel,
+                        onViajeGuardado = {
+                            navController.navigate(Ruta.Catalogo.path) {
+                                popUpTo(Ruta.Inicio.path) { saveState = true }
+                            }
+                        }
+                    )
+                }
+
+                composable(Ruta.Perfil.path) {
+                    PantallaPerfil(viewModel = viewModel)
+                }
+
+                composable(
+                    route = Ruta.Detalle.path,
+                    arguments = listOf(
+                        navArgument(&quot;viajeId&quot;) { type = NavType.IntType }
+                    )
+                ) { backStackEntry -&gt;
+                    val id = backStackEntry.arguments?.getInt(&quot;viajeId&quot;) ?: 0
+                    val context = LocalContext.current
+                    val app = context.applicationContext as ViajesApplication
+                    val detalleViewModel: DetalleViajeViewModel = viewModel(
+                        factory = DetalleViajeViewModelFactory(app.repository)
+                    )
+                    PantallaDetalleScreen(
+                        viajeId = id,
+                        viewModel = detalleViewModel,
+                        onVolver = { navController.popBackStack() }
+                    )
+                }
+            }
+        }
+    }
+}</code></pre></div>
+<h3 id="46-pantallas-de-la-raíz-pantallaskt">4.6. Pantallas de la raíz:
+<code>Pantallas.kt</code></h3>
+<p><strong><code>Pantallas.kt</code></strong></p>
+<div class="wrap"><button class="cp" type="button">Copiar</button><pre><code>package com.example.viajesdam
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.viajesdam.viewmodel.DetalleViajeViewModel
+import com.example.viajesdam.viewmodel.DetalleUiState
+import com.example.viajesdam.viewmodel.ViajeViewModel
+
+// Pantalla de la ruta inicio -&gt; mensaje de bienvenida
+@Composable
+fun PantallaInicio() {
+    Box(
+        modifier = Modifier.fillMaxSize().padding(16.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = stringResource(id = R.string.inicio_bienvenida),
+            style = MaterialTheme.typography.headlineSmall,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+// Pantalla de perfil: cabecera con degradado, avatar redondo con borde y estadísticas de Room
+@Composable
+fun PantallaPerfil(
+    viewModel: ViajeViewModel,
+    modifier: Modifier = Modifier
+) {
+    val viajes by viewModel.listaViajes.collectAsStateWithLifecycle()
+    val total = viajes.size
+    val favoritos = viajes.count { it.esFavorito }
+    val visitados = viajes.count { it.esVisitado }
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Cabecera con degradado y avatar superpuesto
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(160.dp)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primary,
+                            MaterialTheme.colorScheme.primaryContainer
+                        )
+                    )
+                ),
+            contentAlignment = Alignment.BottomCenter
+        ) {
+            Box(
+                modifier = Modifier
+                    .offset(y = 60.dp)
+                    .size(120.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.secondaryContainer)
+                    .border(4.dp, MaterialTheme.colorScheme.surface, CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = stringResource(R.string.avatar_desc),
+                    modifier = Modifier.size(64.dp),
+                    tint = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(72.dp))
+
+        Text(
+            text = stringResource(R.string.user_name),
+            style = MaterialTheme.typography.headlineMedium
+        )
+        Text(
+            text = stringResource(R.string.user_rol),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.primary
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Text(
+            text = stringResource(R.string.user_bio),
+            style = MaterialTheme.typography.bodyMedium,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(horizontal = 32.dp)
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            TarjetaEstadistica(
+                valor = total,
+                etiqueta = stringResource(R.string.estadistica_viajes),
+                modifier = Modifier.weight(1f)
+            )
+            TarjetaEstadistica(
+                valor = favoritos,
+                etiqueta = stringResource(R.string.estadistica_favoritos),
+                modifier = Modifier.weight(1f)
+            )
+            TarjetaEstadistica(
+                valor = visitados,
+                etiqueta = stringResource(R.string.estadistica_visitados),
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+    }
+}
+
+// Tarjeta con un número grande y su etiqueta
+@Composable
+fun TarjetaEstadistica(
+    valor: Int,
+    etiqueta: String,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = valor.toString(),
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+            Text(
+                text = etiqueta,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        }
+    }
+}
+
+// Pantalla de detalle (Maestro-Detalle)
+@Composable
+fun PantallaDetalleScreen(
+    viajeId: Int,
+    viewModel: DetalleViajeViewModel,
+    onVolver: () -&gt; Unit,
+    modifier: Modifier = Modifier
+) {
+    val mensajeNoEncontrado = stringResource(R.string.detalle_no_encontrado)
+
+    LaunchedEffect(viajeId) {
+        viewModel.cargarDetalleViaje(viajeId, mensajeNoEncontrado)
+    }
+
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        Button(onClick = onVolver) {
+            Text(text = stringResource(R.string.detalle_volver))
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        when (val state = uiState) {
+            is DetalleUiState.Cargando -&gt; {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        CircularProgressIndicator()
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(text = stringResource(R.string.detalle_cargando))
+                    }
+                }
+            }
+            is DetalleUiState.Exito -&gt; {
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = state.viaje.destino,
+                            style = MaterialTheme.typography.headlineMedium
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = stringResource(R.string.detalle_pais, state.viaje.pais),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Text(
+                            text = stringResource(R.string.detalle_anio, state.viaje.anio),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Text(
+                            text = if (state.viaje.esVisitado) stringResource(R.string.detalle_visitado)
+                            else stringResource(R.string.detalle_pendiente),
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        Text(
+                            text = if (state.viaje.esFavorito) stringResource(R.string.detalle_favorito)
+                            else stringResource(R.string.detalle_no_favorito),
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+            }
+            is DetalleUiState.Error -&gt; {
+                Text(
+                    text = state.mensaje,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+        }
+    }
+}</code></pre></div>
+<h3 id="47-arranque-mainactivity">4.7. Arranque:
+<code>MainActivity</code></h3>
+<p><strong><code>MainActivity.kt</code></strong></p>
+<div class="wrap"><button class="cp" type="button">Copiar</button><pre><code>package com.example.viajesdam
+
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.viajesdam.ui.screens.AppViajesMainScreen
+import com.example.viajesdam.ui.theme.ViajesDAMTheme
+import com.example.viajesdam.viewmodel.ViajeViewModel
+import com.example.viajesdam.viewmodel.ViajeViewModelFactory
+
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+
+        // 1. Obtenemos el contenedor global de la aplicación
+        val app = application as ViajesApplication
+
+        // 2. Creamos la fábrica pasándole el repositorio almacenado en Application
+        val factory = ViajeViewModelFactory(app.repository)
+
+        setContent {
+            ViajesDAMTheme {
+                // 3. Compose obtiene y mantiene el ViewModel retenido ante rotaciones
+                val viewModel: ViajeViewModel = viewModel(factory = factory)
+
+                // 4. Invocamos la pantalla principal pasando el ViewModel
+                AppViajesMainScreen(viewModel = viewModel)
+            }
+        }
+    }
+}</code></pre></div>
+<hr />
+<h2 id="5-cómo-probar-la-aplicación">5. Cómo probar la aplicación</h2>
+<ol type="1">
+<li>Abre el menú lateral con el icono de hamburguesa y entra en
+<strong>Añadir Viaje</strong>. Crea dos o tres viajes.</li>
+<li>Ve al <strong>Catálogo</strong>: aparecen en la lista.</li>
+<li>Marca alguno como favorito con el corazón y elimina otro con la
+papelera.</li>
+<li>Pulsa sobre una <strong>tarjeta</strong>: se abre el detalle y
+durante un segundo aparece el indicador de carga.</li>
+<li>Comprueba que el detalle muestra país, año, si está visitado y si es
+favorito.</li>
+<li>Pulsa <strong>← Volver al Catálogo</strong>.</li>
+<li>Abre <strong>Perfil</strong> y comprueba que las tres tarjetas
+cambian al añadir, marcar o eliminar viajes.</li>
+</ol>
+<hr />
+<h2 id="6-preguntas-de-comprensión">6. Preguntas de comprensión</h2>
+<ol type="1">
+<li>¿Por qué <code>ViajeViewModel</code> y
+<code>DetalleViajeViewModel</code> necesitan una <code>Factory</code>
+propia?</li>
+<li>¿Por qué el mensaje de error del detalle llega por parámetro y no se
+escribe dentro del ViewModel?</li>
+<li>¿Qué diferencia hay entre <code>Flow</code> en
+<code>obtenerTodos()</code> y <code>suspend</code> en
+<code>obtenerPorId()</code>? ¿Por qué cada una se declara así?</li>
+<li>¿Por qué las estadísticas del perfil se actualizan solas?</li>
+<li>¿Qué ocurre si en el <code>NavHost</code> se registra
+<code>ListaViajesScreen(viewModel, {})</code>?</li>
+<li>¿Para qué sirven <code>@Volatile</code> y <code>synchronized</code>
+en <code>AppDatabase</code>?</li>
+<li>¿Por qué <code>drawerState.open()</code> se llama dentro de
+<code>coroutineScope.launch { }</code>?</li>
+</ol>
+<h3 id="respuestas">Respuestas</h3>
+<ol type="1">
+<li><code>viewModel()</code> solo puede crear clases con constructor
+vacío. Estos ViewModels reciben un <code>ViajeRepository</code>, así que
+la <code>Factory</code> indica cómo construirlos y permite que Compose
+los retenga ante rotaciones.</li>
+<li>El ViewModel no tiene acceso a <code>stringResource()</code>. La
+pantalla lee el texto de <code>strings.xml</code> y se lo pasa, así no
+hay cadenas escritas en el código.</li>
+<li><code>obtenerTodos()</code> devuelve un <code>Flow</code> porque la
+lista debe actualizarse sola cada vez que cambie la tabla.
+<code>obtenerPorId()</code> es <code>suspend</code> porque se ejecuta
+una sola vez y puede devolver <code>null</code> si el id no existe.</li>
+<li>El DAO devuelve un <code>Flow</code>: Room emite la lista nueva
+cuando la tabla cambia, el ViewModel la expone como
+<code>StateFlow</code> y el perfil, que cuenta sobre esa lista, se
+recompone.</li>
+<li>Al pulsar una tarjeta se ejecuta un bloque vacío: el evento se
+pierde y no se navega. Hay que conectar la lambda con
+<code>navController.navigate(Ruta.Detalle.crearRuta(viajeId))</code>.</li>
+<li><code>@Volatile</code> hace visible <code>INSTANCE</code> para todos
+los hilos y <code>synchronized</code> evita crear dos instancias de la
+base de datos a la vez.</li>
+<li><code>open()</code> y <code>close()</code> son funciones
+<code>suspend</code> que animan el panel, así que necesitan un ámbito de
+corrutina obtenido con <code>rememberCoroutineScope()</code>.</li>
+</ol>
+<hr />
+<h2 id="7-lista-de-comprobación-antes-de-entregar">7. Lista de
+comprobación antes de entregar</h2>
+<ul class="task-list">
+<li><label><input type="checkbox" />Proyecto con paquete
+<code>com.example.viajesdam</code>.</label></li>
+<li><label><input type="checkbox" /><code>material-icons-extended</code>
+añadido y Gradle sincronizado.</label></li>
+<li><label><input type="checkbox" /><code>ViajesApplication</code>
+registrada en el manifest con <code>android:name</code>.</label></li>
+<li><label><input type="checkbox" />Clases de Room en
+<code>model</code>, ViewModels y Factories en <code>viewmodel</code>,
+<code>Ruta</code> en <code>view</code>.</label></li>
+<li><label><input type="checkbox" />Ningún texto hardcodeado en los
+composables.</label></li>
+<li><label><input type="checkbox" /><code>innerPadding</code> aplicado
+al <code>NavHost</code>.</label></li>
+<li><label><input type="checkbox" />El nombre del argumento coincide
+exactamente: <code>viajeId</code>.</label></li>
+<li><label><input type="checkbox" />El menú hamburguesa abre y cierra el
+drawer y marca la opción seleccionada.</label></li>
+<li><label><input type="checkbox" />El perfil muestra tres estadísticas
+y se actualiza al añadir, marcar o eliminar.</label></li>
+<li><label><input type="checkbox" />Las pantallas no reciben
+<code>NavController</code>.</label></li>
+</ul>
+</main><script>document.querySelectorAll('.cp').forEach(function(b){b.addEventListener('click',function(){var t=b.parentNode.querySelector('code').innerText;var ok=function(){b.textContent='Copiado';setTimeout(function(){b.textContent='Copiar'},1500)};if(navigator.clipboard){navigator.clipboard.writeText(t).then(ok,function(){})}})});</script></body></html>
