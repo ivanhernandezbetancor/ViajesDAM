@@ -46,19 +46,8 @@ Desarrollar **ViajesDAM**, una aplicación Android para almacenar y consultar lo
 * Estados del detalle con una `sealed interface` (`Cargando`, `Exito`, `Error`).
 * El mensaje de error llega al ViewModel como parámetro, porque el ViewModel no puede usar `stringResource()`.
 
-## 📊 Rúbrica orientativa (10 puntos)
+<div align="center">
 
-| Apartado | Puntos |
-|---|---|
-| Capa `model`: entidad, DAO, base de datos Singleton y repositorio | 1,5 |
-| ViewModels, Factories y `stateIn` | 1,5 |
-| Formulario con estado y validación | 1 |
-| Catálogo con `LazyColumn`, `key` y acciones | 1 |
-| Menú lateral con `ModalNavigationDrawer` | 1,5 |
-| Navegación con argumento y detalle con corrutinas | 1,5 |
-| Pantalla de perfil | 1 |
-| Organización en capas y sin textos hardcoded | 1 |
+[![Ver HTML de la Actividad](https://img.shields.io/badge/📄_Ver_Archivo_HTML-ViajesDAM.html-0b6e6e?style=for-the-badge)](./ViajesDAM.html)
 
----
-
-## 🏗️ Arquitectura
+</div>
