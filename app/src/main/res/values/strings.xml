@@ -1,0 +1,50 @@
+<resources>
+    <string name="app_name">ViajesDAM</string>
+
+    <string name="titulo_app">ViajesDAM</string>
+
+    <!-- Menú lateral -->
+    <string name="cabecera_drawer">ViajesDAM - Room ORM</string>
+    <string name="abrir_menu">Abrir Menú</string>
+    <string name="menu_inicio">Inicio</string>
+    <string name="menu_catalogo">Catálogo</string>
+    <string name="menu_anadir_viaje">Añadir Viaje</string>
+    <string name="menu_perfil">Perfil</string>
+    <string name="menu_detalle">Detalle</string>
+
+    <!-- Inicio -->
+    <string name="inicio_bienvenida">Bienvenido a ViajesDAM, tu diario de viajes</string>
+
+    <!-- Formulario -->
+    <string name="anadir_viaje">Añadir Viaje (Room)</string>
+    <string name="destino_viaje">Destino del Viaje</string>
+    <string name="pais_viaje">País</string>
+    <string name="anio_viaje">Año del viaje</string>
+    <string name="viaje_visitado">Ya lo he visitado</string>
+    <string name="guardar_viaje">Guardar Viaje</string>
+
+    <!-- Catálogo -->
+    <string name="favorito">Favorito</string>
+    <string name="eliminar_viaje">Eliminar viaje</string>
+    <string name="pais_anio">%1$s • %2$d</string>
+
+    <!-- Detalle -->
+    <string name="detalle_volver">← Volver al Catálogo</string>
+    <string name="detalle_cargando">Cargando datos de Room en segundo plano...</string>
+    <string name="detalle_pais">País: %1$s</string>
+    <string name="detalle_anio">Año del viaje: %1$d</string>
+    <string name="detalle_visitado">Estado: Ya visitado</string>
+    <string name="detalle_pendiente">Estado: Pendiente de visitar</string>
+    <string name="detalle_no_encontrado">Viaje no encontrado.</string>
+    <string name="detalle_favorito">Favorito: Sí</string>
+    <string name="detalle_no_favorito">Favorito: No</string>
+
+    <!-- Perfil -->
+    <string name="avatar_desc">Avatar del usuario</string>
+    <string name="user_name">Ivan HB</string>
+    <string name="user_rol">Viajero Aventurero</string>
+    <string name="user_bio">Viajero de toda la vida. Aquí guardo los viajes que he hecho y los que me quedan por hacer.</string>
+    <string name="estadistica_viajes">Viajes</string>
+    <string name="estadistica_favoritos">Favoritos</string>
+    <string name="estadistica_visitados">Visitados</string>
+</resources>
