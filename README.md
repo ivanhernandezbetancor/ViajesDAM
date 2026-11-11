@@ -48,6 +48,6 @@ Desarrollar **ViajesDAM**, una aplicación Android para almacenar y consultar lo
 
 <div align="center">
 
-[![Ver HTML de la Actividad](https://img.shields.io/badge/📄_Ver_Archivo_HTML-ViajesDAM.html-0b6e6e?style=for-the-badge)](./ViajesDAM.html)
+👉 **[Ver el archivo HTML de la actividad](./ViajesDAM.html)**
 
 </div>
